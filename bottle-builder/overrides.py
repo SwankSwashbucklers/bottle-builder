@@ -9,8 +9,9 @@ __all__ = ["Template", "sCall", "sPopen"]
 
 from string import Template
 from re import compile
+import os
 
-class TemplateWrapper():
+class TemplateWrapper:
 
     def __init__(self, cls):
         PYTHON_LL = 80

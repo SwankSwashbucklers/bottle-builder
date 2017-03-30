@@ -13,8 +13,9 @@
 __all__ = []
 
 import os
-from os.path import isfile, isdir, normpath, join
+from os.path import isfile, isdir, abspath, normpath, join
 from overrides import sCall
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 
 ##### Exceptions ################################################################
@@ -40,8 +41,8 @@ apple_res   = [ "57", "76", "120", "152", "180" ] # add to head backwards
 class FaviconGenerator: # TODO: routes and precomposed
 
     def __init__(self, template_fp, result_fp):
-        self.template_fp = template_fp
-        self.result_fp = join(result_fp, 'favicon')
+        self.template_fp = abspath(template_fp)
+        self.result_fp = abspath(join(result_fp, 'favicon'))
         self.result_path = lambda p: normpath(join(self.result_fp, p)) # normpath for windows users TODO: preferably get rid of this
 
     def _generate_pngs(self, res, file_tpl):
@@ -54,11 +55,11 @@ class FaviconGenerator: # TODO: routes and precomposed
 
     def _generate_ico(self):
         args = [ favicon_tpl(res) for res in ico_res ]
-        args.append('favicon_res')
+        args.append('favicon.ico')
         sCall('convert', *[ self.result_path(p) for p in args ])
 
     def generate_resources(self):
-        os.makedirs(self.result_fp, exists_ok=False) # throws OSError (FileExistsError)
+        os.makedirs(self.result_fp) # throws OSError (FileExistsError)
         for res in ico_res + favicon_res:
             self._generate_pngs(res, favicon_tpl)
         for res in android_res:
@@ -67,8 +68,9 @@ class FaviconGenerator: # TODO: routes and precomposed
             self._generate_pngs(res, apple_tpl)
         self._generate_ico()
         # clean up unnecessary files
-        for res in ico_res if res not in favicon_res:
-            os.remove(self.result_path(favicon_tpl(res)))
+        for res in ico_res:
+            if res not in favicon_res:
+                os.remove(self.result_path(favicon_tpl(res)))
 
     def _get_head_element(self, attrs):
         return "".join([
@@ -78,7 +80,9 @@ class FaviconGenerator: # TODO: routes and precomposed
     def get_head_elements(self): # TODO: cached property?
         fav_head = [[('rel', 'shortcut icon'), ('href', 'favicon.ico')]]  # start with ico
         #resources = [ f for f in os.listdir(self.result_fp) if f.endswith('png') ]
-        for res in android_res.reverse(): # .sort().reverse() ?
+        android_res_copy = list(android_res) # copy the list
+        android_res_copy.reverse() # reverse it # .sort().reverse() ?
+        for res in android_res_copy:
             filename = android_tpl(res)
             fp = self.result_path(filename)
             if not isfile(fp):
@@ -89,7 +93,9 @@ class FaviconGenerator: # TODO: routes and precomposed
                 ('sizes', '{0}x{0}'.format(res)),
                 ('href', '/{}'.format(filename))
             ])
-        for res in apple_res.reverse():
+        apple_res_copy = list(apple_res) # copy the list
+        apple_res_copy.reverse() # reverse it # .sort().reverse() ?
+        for res in apple_res_copy:
             filename = apple_tpl(res)
             fp = self.result_path(filename)
             if not isfile(fp):
@@ -100,7 +106,9 @@ class FaviconGenerator: # TODO: routes and precomposed
                 ('sizes', '{0}x{0}'.format(res)),
                 ('href', '/{}'.format(filename))
             ])
-        for res in favicon_res.reverse():
+        favicon_res_copy = list(favicon_res) # copy the list
+        favicon_res_copy.reverse() # reverse it # .sort().reverse() ?
+        for res in favicon_res_copy:
             filename = favicon_tpl(res)
             fp = self.result_path(filename)
             if not isfile(fp):
@@ -108,7 +116,7 @@ class FaviconGenerator: # TODO: routes and precomposed
                 return
             fav_head.append([
                 ('rel', 'icon'),
-                ('type', 'image/png')
+                ('type', 'image/png'),
                 ('sizes', '{0}x{0}'.format(res)),
                 ('href', '/{}'.format(filename))
             ])
@@ -116,15 +124,39 @@ class FaviconGenerator: # TODO: routes and precomposed
 
     def generate(self):
         self.generate_resources()
+        with open(self.result_path('head.html'), 'w') as f:
+            f.write(self.get_head_elements())
 
 
 ##### Command Line Interface ###################################################
 
 def parse_args():
-    pass
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
+        description=__doc__
+    )
+    parser.add_argument(
+        'template_filepath',
+        metavar='TPL',
+        type=str,
+        nargs='?',
+        default='./favicon.svg',
+        help='the filepath to an .svg of the favicon. (default "./favicon.svg")'
+    )
+    parser.add_argument(
+        'result_path',
+        metavar='RES',
+        type=str,
+        nargs='?',
+        default='.',
+        help='the path to put the resulting resources. (default ".")'
+    )
+    return parser.parse_args()
 
 def main():
-    pass
+    options = parse_args()
+    generator = FaviconGenerator(options.template_filepath, options.result_path)
+    generator.generate()
 
 
 if __name__ == '__main__':
