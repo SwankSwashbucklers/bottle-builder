@@ -6,19 +6,21 @@
     provided .svg file, and for generating the optimal <head> elements for
     dictating access to those resources.
 
+    Requirements:
+    * inkscape
+    * imagemagick
+
     :copyright: (c) 2017 by Nick Balboni.
     :license: MIT.
 """
 
-__all__ = []
+__all__ = [ 'FaviconGenerator' ]
 
 import os
 from os.path import isfile, isdir, abspath, normpath, join
 from overrides import sCall
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-
-##### Exceptions ################################################################
 
 ##### Constants ################################################################
 
@@ -34,13 +36,13 @@ favicon_res = [ "16", "32", "96", "160", "196", "300" ]
 android_res = [ "192" ]
 apple_res   = [ "57", "76", "120", "152", "180" ] # add to head backwards
 
-##### Helpers ##################################################################
 
-##### Classes ##################################################################
+##### Favicon Generator Class ##################################################
 
 class FaviconGenerator: # TODO: routes and precomposed
 
     def __init__(self, template_fp, result_fp):
+        # NOTE: abspath required for `inkscape` and `convert` commands
         self.template_fp = abspath(template_fp)
         self.result_fp = abspath(join(result_fp, 'favicon'))
         self.result_path = lambda p: normpath(join(self.result_fp, p)) # normpath for windows users TODO: preferably get rid of this
