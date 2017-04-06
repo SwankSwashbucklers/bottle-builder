@@ -3,13 +3,13 @@
     behavior and windows/mac compatibility.
 """
 
-__all__ = ["Template", "sCall", "sPopen"]
+__all__ = [ "Template", "sCall", "sPopen" ]
 
 
+##### Template #################################################################
 
 from string import Template
 from re import compile
-import os
 
 class TemplateWrapper:
 
@@ -62,8 +62,11 @@ class TemplateWrapper:
 Template = TemplateWrapper(Template)
 
 
+##### System Calls #############################################################
+
 from subprocess import Popen, call, DEVNULL, STDOUT, PIPE
 from sys import executable
+import os
 
 def sPopen(*args):
     command, shell = list(args), True

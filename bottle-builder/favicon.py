@@ -18,8 +18,9 @@ __all__ = [ 'FaviconGenerator' ]
 
 import os
 from os.path import isfile, isdir, abspath, normpath, join
-from overrides import sCall
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
+
+from overrides import sCall
 
 
 ##### Constants ################################################################
