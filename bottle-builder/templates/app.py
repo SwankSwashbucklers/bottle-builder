@@ -14,18 +14,22 @@ import os
 
 parser = ArgumentParser(
     formatter_class=ArgumentDefaultsHelpFormatter,
-    description=__doc__ )
+    description=__doc__
+)
 parser.add_argument('-d', '--deploy',
     action='store_true',
-    help='Run server for deployment' )
+    help='Run server for deployment'
+)
 parser.add_argument('-i', '--ip',
     type=str,
     default="127.0.0.1",
-    help='ip to run the server against, default localhost' )
+    help='ip to run the server against, default localhost'
+)
 parser.add_argument('-p', '--port',
     type=str,
     default="8080",
-    help='port to run server on' )
+    help='port to run server on'
+)
 args = parser.parse_args()
 
 # change working directory to script directory

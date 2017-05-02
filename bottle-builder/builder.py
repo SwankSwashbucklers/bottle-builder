@@ -9,6 +9,7 @@ import shutil
 
 from stylesheets import StylesheetGenerator
 from favicon import FaviconGenerator
+from routes import RouteGenerator
 
 
 ################################################################################
@@ -50,6 +51,7 @@ def parse_args():
 def main():
     options = parse_args()
     print(options.path)
+    # NOTE: don't change the working directory so that you can use the the templates in this package
     os.chdir(options.path)
     try:
         os.makedirs('www', exist_ok=False)
@@ -57,13 +59,23 @@ def main():
         shutil.rmtree('www')
         os.makedirs('www')
 
+    # resources and views
+    # NOTE: this must happen first because static must be copied first, TODO: I hate this
+    routes_generator = RouteGenerator('.', 'www')
+    routes_generator.copy_resources()
+    routes_generator.copy_views()
+
     # stylesheets
-    styles_generator = StylesheetGenerator('dev/sass', 'www')
+    styles_generator = StylesheetGenerator('dev/sass', 'www/static')
     styles_generator.generate()
 
     # favicons
-    favicon_generator = FaviconGenerator('res/favicon.svg', 'www')
+    favicon_generator = FaviconGenerator('res/favicon.svg', 'www/static')
     favicon_generator.generate()
+
+    # TODO: remove head from favicons before generating app.py
+    # TODO: parse out critical CSS before generating app.py
+    routes_generator.populate_app_file()
 
 
 if __name__ == '__main__':
