@@ -21,6 +21,8 @@ from overrides import Template
 
 ##### Constants ################################################################
 
+IGNORED_FILES = [ '.DS_Store' ]
+
 ### Route Templates
 
 MAIN_ROUTE_TEMPLATE = Template("""\
@@ -36,7 +38,7 @@ def load_resource():
 """ )
 
 
-##### Favicon Generator Class ##################################################
+##### Route Generator Class ####################################################
 
 class RouteGenerator:
 
@@ -44,31 +46,34 @@ class RouteGenerator:
         self.src_path = lambda *p: normpath(abspath(join(src_dir, *p))) # root
         self.dest_path = lambda *p: normpath(abspath(join(dest_dir, *p))) # www
 
+    def _copy_resource(self, src_folder, dest_folder):
+        src = self.src_path('res', src_folder)
+        if not os.path.isdir(src):
+            print('Folder res/'+ src_folder, 'not found')
+            return
+        dest = self.dest_path('static', dest_folder)
+        os.mkdir(dest)
+        for root, dirs, files in os.walk(src):
+            path = relpath(root, src)
+            for dirname in dirs:
+                print(dirname)
+                os.mkdir(join(dest, path, dirname))
+            for filename in files:
+                if filename.startswith('~'):
+                    continue
+                if filename in IGNORED_FILES:
+                    continue
+                shutil.copy(
+                    join(root, filename),
+                    join(dest, path, filename)
+                )
+
     def copy_resources(self):
         # NOTE: copy resources over and then generate the routes
         # NOTE: static must be copied first
-        # TODO: don't copy over .DS_Store or similar files
-        try:
-            shutil.copytree(
-                self.src_path('res', 'static'),
-                self.dest_path('static')
-            )
-        except FileNotFoundError as e:
-            print('Folder res/static not found.')
-        try:
-            shutil.copytree(
-                self.src_path('res', 'img'),
-                self.dest_path('static', 'img')
-            )
-        except FileNotFoundError as e:
-            print('Folder res/img not found.')
-        try:
-            shutil.copytree(
-                self.src_path('res', 'font'),
-                self.dest_path('static', 'font')
-            )
-        except FileNotFoundError as e:
-            print('Folder res/font not found.')
+        self._copy_resource('static', '')
+        self._copy_resource('img', 'img')
+        self._copy_resource('font', 'font')
 
     def copy_views(self):
         shutil.copytree(
