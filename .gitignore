@@ -1,3 +1,7 @@
+bottle-builder/dev/
+bottle-builder/res/
+bottle-builder/www/
+
 # Mac
 .DS_Store
 
