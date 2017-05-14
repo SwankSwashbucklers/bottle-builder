@@ -15,7 +15,7 @@ class TemplateWrapper:
 
     def __init__(self, cls):
         PYTHON_LL = 80
-        HTML_LL   = 112
+        HTML_LL   = 80
 
         self.cls = cls
         self.headers = [

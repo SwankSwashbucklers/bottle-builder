@@ -10,6 +10,7 @@ import shutil
 from stylesheets import StylesheetGenerator
 from favicon import FaviconGenerator
 from routes import RouteGenerator
+from head import HeadGenerator
 
 
 ################################################################################
@@ -71,7 +72,11 @@ def main():
 
     # favicons
     favicon_generator = FaviconGenerator('res/favicon.svg', 'www/static')
-    favicon_generator.generate()
+    favicon_generator.generate_resources()
+
+    # head elements
+    head_generator = HeadGenerator('www', favicon_generator)
+    head_generator.set_head()
 
     # TODO: remove head from favicons before generating app.py
     # TODO: parse out critical CSS before generating app.py
