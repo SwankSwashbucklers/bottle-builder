@@ -48,8 +48,13 @@ STYLE_SHEET_HEAD_EL = """\
 """
 
 STYLE_SHEET_PAGES = """\
-    % if template in {}:
-    <link rel="stylesheet" type="text/css" href="/{{template}}.css">
+    % if defined('template') and template in {0}:
+    <link rel="stylesheet" type="text/css" href="/{{{{template}}}}.css">
+    % end
+    % if defined('embeded_css'):
+    <style>
+        {{{{! embeded_css }}}}
+    </style>
     % end"""
 
 

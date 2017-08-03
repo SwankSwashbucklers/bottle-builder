@@ -24,6 +24,17 @@ from os.path import isfile, isdir, abspath, normpath, join, relpath
 from shutil import rmtree
 
 
+##### Constants ################################################################
+
+### Templates
+
+EMBEDED_CSS_BLOCK = """\
+<%
+embeded_css = \"""{}\"""
+%>
+"""
+
+
 ##### Helpers ##################################################################
 
 def _is_sass(filepath, accept_partials=True): # NOTE: accepts an absolute path
@@ -109,11 +120,65 @@ class StylesheetGenerator:
                 dest_file = os.path.splitext(sass_file)[0] + '.css' # TODO: min if deploy
                 self._generate_sass(fp, self.dest_path('critical', dest_file))
 
+    def _get_general_critical_css(self):
+        try:
+            with open(self.dest_path('critical', 'styles.css'), 'r') as f:
+                return f.read()
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print('Error opening file', e)
+        return ''
+
+    def _get_critical_css(self, page):
+        try:
+            with open(self.dest_path('critical', page + '.css'), 'r') as f:
+                return f.read()
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print('Error opening file', e)
+        return ''
+
+    def _get_views(self):
+        # TODO: doesn't return nested views
+        # TODO: check if it ends with .tpl?
+        views_files = os.listdir(self.dest_path('..', '..', 'views'))
+        def is_view(x):
+            return (not x.startswith('~')
+                and not x.startswith('!')
+                and isfile(self.dest_path('..', '..', 'views', x)))
+        views = map(
+            lambda x: os.path.splitext(os.path.split(x)[-1])[0],
+            filter(is_view, views_files)
+        )
+        return list(views)
+
+    def _inline_css(self, page, embeded_css):
+        # add the embeded_css variable to the top of the template
+        # if there is css to embed
+        if not embeded_css:
+            return
+        fp = self.dest_path('..', '..', 'views', page + '.tpl')
+        try:
+            file_contents = ''
+            with open(fp, 'r') as f:
+                file_contents = f.read()
+            with open(fp, 'w') as f:
+                f.write(EMBEDED_CSS_BLOCK.format(embeded_css) + file_contents)
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print('Error opening file', e)
+
     def inline_critical_css(self):
         # take generated critical css, and the view file and inline in
         # TODO: raise exception if a css file exists with no view
         # NOTE: this is a combination of general and page specific
-        pass
+        general_inline_css = self._get_general_critical_css()
+        for view in self._get_views():
+            embeded_css = general_inline_css + self._get_critical_css(view)
+            self._inline_css(view, embeded_css)
 
     ### MAIN
     def generate(self):
