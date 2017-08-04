@@ -34,6 +34,32 @@ embeded_css = \"""{}\"""
 %>
 """
 
+STYLE_SHEET_HEAD_EL = """\
+<link rel="stylesheet" type="text/css" href="/{0}">
+"""
+
+DEFERRED_STYLES_FOOTER_BLOCK = """\
+    <noscript id="deferred-styles">
+        {0}
+        % if defined('template') and template in {1}:
+        <link rel="stylesheet" type="text/css" href="/{{{{template}}}}.css">
+        % end
+    </noscript>
+    <script>
+        var loadDeferredStyles = function() {{
+            var addStylesNode = document.getElementById("deferred-styles");
+            var replacement = document.createElement("div");
+            replacement.innerHTML = addStylesNode.textContent;
+            document.body.appendChild(replacement)
+            addStylesNode.parentElement.removeChild(addStylesNode);
+        }};
+        var raf = requestAnimationFrame || mozRequestAnimationFrame ||
+            webkitRequestAnimationFrame || msRequestAnimationFrame;
+        if (raf) raf(function() {{ window.setTimeout(loadDeferredStyles, 0); }});
+        else window.addEventListener('load', loadDeferredStyles);
+    </script>
+"""
+
 
 ##### Helpers ##################################################################
 
@@ -44,6 +70,14 @@ def _is_sass(filepath, accept_partials=True): # NOTE: accepts an absolute path
     if not os.path.splitext(f)[-1].lower() in ['.scss', '.sass']:
         return False
     if not accept_partials and f.startswith('_'):
+        return False
+    return True
+
+def _is_css(filepath): # NOTE: accepts an absolute path
+    if not isfile(filepath):
+        return False
+    f = os.path.split(filepath)[-1]
+    if not os.path.splitext(f)[-1].lower() == '.css':
         return False
     return True
 
@@ -171,6 +205,18 @@ class StylesheetGenerator:
         except Exception as e:
             print('Error opening file', e)
 
+    def _get_deferred_styles(self):
+        styles_block = ''
+        # TODO: inline critical before you get stylesheets
+        stylesheets = []
+        for sheet in os.listdir(self.dest_path()):
+            if _is_css(self.dest_path(sheet)):
+                stylesheets.append(os.path.splitext(sheet)[0])
+        if 'styles' in stylesheets:
+            stylesheets.remove('styles')
+            styles_block = STYLE_SHEET_HEAD_EL.format('styles.css')
+        return DEFERRED_STYLES_FOOTER_BLOCK.format(styles_block, stylesheets)
+
     def inline_critical_css(self):
         # take generated critical css, and the view file and inline in
         # TODO: raise exception if a css file exists with no view
@@ -179,6 +225,17 @@ class StylesheetGenerator:
         for view in self._get_views():
             embeded_css = general_inline_css + self._get_critical_css(view)
             self._inline_css(view, embeded_css)
+        rmtree(self.dest_path('critical'))
+
+    def load_deferred_styles(self):
+        try:
+            fp = self.dest_path('..', '..', 'views', '~footer.tpl')
+            with open(fp, 'a') as f:
+                f.write(self._get_deferred_styles())
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print('Error opening file', e)
 
     ### MAIN
     def generate(self):

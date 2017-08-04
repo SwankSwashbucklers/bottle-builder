@@ -43,17 +43,10 @@ OPENGRAPH_IMAGE_HEAD = """<meta property="og:image:type" content="image/png">
     <meta property="og:image:url" content="http://{{url}}/favicon-300x300.png">
     <meta property="og:image" content="http://{{url}}/favicon-300x300.png">"""
 
-STYLE_SHEET_HEAD_EL = """\
-    <link rel="stylesheet" type="text/css" href="/{0}">
-"""
-
 STYLE_SHEET_PAGES = """\
-    % if defined('template') and template in {0}:
-    <link rel="stylesheet" type="text/css" href="/{{{{template}}}}.css">
-    % end
     % if defined('embeded_css'):
     <style>
-        {{{{! embeded_css }}}}
+        {{! embeded_css }}
     </style>
     % end"""
 
@@ -89,16 +82,7 @@ class HeadGenerator:
         return OPENGRAPH_HEAD
 
     def _get_style_sheet_head(self):
-        styles_head = ''
-        # TODO: inline critical before you get head elements
-        stylesheets = []
-        for sheet in os.listdir(self.dest_path('static', 'css')):
-            if _is_css(self.dest_path('static', 'css', sheet)):
-                stylesheets.append(os.path.splitext(sheet)[0])
-        if 'styles' in stylesheets:
-            stylesheets.remove('styles')
-            styles_head += STYLE_SHEET_HEAD_EL.format('styles.css')
-        return styles_head + STYLE_SHEET_PAGES.format(stylesheets)
+        return STYLE_SHEET_PAGES
 
     def set_head(self):
         head_tpl = ''

@@ -70,6 +70,7 @@ def main():
     styles_generator = StylesheetGenerator('dev/sass', 'www/static')
     styles_generator.generate()
     styles_generator.inline_critical_css()
+    styles_generator.load_deferred_styles()
 
     # favicons
     favicon_generator = FaviconGenerator('res/favicon.svg', 'www/static')
